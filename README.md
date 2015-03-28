@@ -6,35 +6,35 @@ easily-convertable JSON or Python Dictionary-based format.
 Currently does *not* support MPD files, but that may change in the future.
 
 ##Usage (Command Line)
-Download `ldrparser.py` and `libLDRParser.py` and place them in the same directory.
+Download `LDRParser.py` and `libldrparser.py` and place them in the same directory.
 
-Run `python ldrparser.py` from the command line with the path to your ldraw library, the path to your .ldr file,
+Run `python LDRParser.py` from the command line with the path to your ldraw library, the path to your .ldr file,
 and any options you may like.
 
 **Options:**
 
-* `-s=false [false|true]` Whether to skip comments or not.
+* `-s= [Comma-separated string. Values: COMMENT,SUBPART,LINE,TRI,QUAD,OPTLINE] Line control codes to skip.
 * `-m=false [false|true]` Whether to minify the output (don't pretty-print it) or not.
 * `-o=json [json|dict]` Output format: JSON or Python Dictionary.
 * `-l=0 [0-5]` Logging Level. Log level 0 displays nothing other than the output, 5 is verbose.
 
 **Full example:**
 ```
-python ldrparser.py /home/tribex/Software/ldraw myModel.ldr -s=true -o=dict -m=true -l=5
+python LDRParser.py /home/tribex/Software/ldraw myModel.ldr -s=COMMENTS,LINE,OPTLINE -o=dict -m=true -l=5
 ```
 
 Additionally, any file within (no matter what depth) the ldraw directory can be parsed simply be referencing its full name as if it was in the current directory.
 
 ##Usage (Python Module)
-Download `libLDRParser.py`.
-From your project, import LDRParser from libLDRParser (`from libLDRParser import LDRParser;
+Download `libldrparser.py`.
+From your project, import LDRParser from libldrparser (`from libldrparser import LDRParser;
 `)
 
 Create an instance of LDRParser, this allows the part cache to persist across multiple conversions for a model and greatly speeds up subsequent runs.
 ```
 parser = LDRParser("PATH/TO/LDRAW/LIBRARY", "PATH/TO/TARGET/MODEL", {
   # Options
-  "skipComments": False,
+  "skip": [], # A list of line control codes to skip. Valid codes: ("COMMENT", "SUBPART", "LINE", "TRI", "QUAD", "OPTLINE")
   "logLevel": 0
 });
 
@@ -193,6 +193,7 @@ A basic file looks like this:
 ```
 
 ##TODO:
+ * Better code formatting. Use PEP8.
  * Support for mpd files.
  * Support for various encodings.
  * Support for part metas and comment processing.

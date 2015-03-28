@@ -19,203 +19,204 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os, fnmatch;
+import os, fnmatch
 
 class LDRParser:
-  version = ("0", "1", "0");
-  ControlCodes = ("COMMENT", "SUBPART", "LINE", "TRI", "QUAD", "OPTLINE");
+  version = ("0", "1", "0")
+  ControlCodes = ("COMMENT", "SUBPART", "LINE", "TRI", "QUAD", "OPTLINE")
         
   def getCode(self, num):
-    print(self.ControlCodes);
+    print(self.ControlCodes)
 
-  libraryLocation = "";
-  startFile = "";
+  libraryLocation = ""
+  startFile = ""
   
   options = {
-    "skipComments": False,
+    "skip": [],
     "logLevel": 0,
   }
   
-  _parts = {};
+  _parts = {}
     
   def __init__(self, libraryLocation, startFile, options={}):
-    self.libraryLocation = libraryLocation;
-    self.startFile = startFile;
-    self.options.update(options);
+    self.libraryLocation = libraryLocation
+    self.startFile = startFile
+    self.options.update(options)
     
   def fromLDR(self):
-    self.log("Skip Comments: {0}".format(self.options["skipComments"]), 5);
+    if len(self.options["skip"]) > 0:
+      self.log("Skip: {0}".format(", ".join(self.options["skip"])), 5)
     # This can load any valid file on the LDraw path with the specified name, not just a full path.
-    filePath = self.findFile(self.startFile);
+    filePath = self.findFile(self.startFile)
     
     if filePath == None:
-      self.log("Critical Error - File Not Found: {0}".format(filePath), 0);
-      return None;
+      self.log("Critical Error - File Not Found: {0}".format(filePath), 0)
+      return None
     
-    self.log("Reading Initial File: {0}".format(filePath), 3);
-    f = open(filePath, 'r');
-    root = self.buildPartData(f.read());
-    root["parts"] = self._parts;
+    self.log("Reading Initial File: {0}".format(filePath), 3)
+    f = open(filePath, 'r')
+    root = self.buildPartData(f.read())
+    root["parts"] = self._parts
     
-    self.log("Completed Parsing File: {0}".format(filePath), 3);
-    return root;
+    self.log("Completed Parsing File: {0}".format(filePath), 3)
+    return root
         
   def buildPartData(self, ldrString):
-    definition = {};
-    lines = ldrString.splitlines();
+    definition = {}
+    lines = ldrString.splitlines()
       
     for line in lines:
-      ctrl = int(line.lstrip()[0] if line.lstrip() else -1);
-      if ctrl == -1: continue;
+      ctrl = int(line.lstrip()[0] if line.lstrip() else -1)
+      if ctrl == -1: continue
       
-      code = self.ControlCodes[int(ctrl)];
+      code = self.ControlCodes[int(ctrl)]
 
-      if code == "COMMENT":
-        if not self.options["skipComments"]:
-          if "comments" not in definition:
-            definition["comments"] = [];
-          definition["comments"].append(self.parseComment(line));
-        
-      elif code == "SUBPART":
-        if "subparts" not in definition:
-          definition["subparts"] = [];
-        definition["subparts"].append(self.parsePart(line));
-        
-      elif code == "LINE":
-        if "lines" not in definition:
-          definition["lines"] = [];
-        definition["lines"].append(self.parseLine(line));
-        
-      elif code == "TRI":
-        if "tris" not in definition:
-          definition["tris"] = [];
-        definition["tris"].append(self.parseTri(line));
-        
-      elif code == "QUAD":
-        if "quads" not in definition:
-          definition["quads"] = [];
-        definition["quads"].append(self.parseQuad(line));
-        
-      elif code == "OPTLINE":
-        if "optlines" not in definition:
-          definition["optlines"] = [];
-        definition["optlines"].append(self.parseQuad(line));
+      if code not in self.options["skip"]:
+        if code == "COMMENT":
+            if "comments" not in definition:
+              definition["comments"] = []
+            definition["comments"].append(self.parseComment(line))
+          
+        elif code == "SUBPART":
+          if "subparts" not in definition:
+            definition["subparts"] = []
+          definition["subparts"].append(self.parsePart(line))
+          
+        elif code == "LINE":
+          if "lines" not in definition:
+            definition["lines"] = []
+          definition["lines"].append(self.parseLine(line))
+          
+        elif code == "TRI":
+          if "tris" not in definition:
+            definition["tris"] = []
+          definition["tris"].append(self.parseTri(line))
+          
+        elif code == "QUAD":
+          if "quads" not in definition:
+            definition["quads"] = []
+          definition["quads"].append(self.parseQuad(line))
+          
+        elif code == "OPTLINE":
+          if "optlines" not in definition:
+            definition["optlines"] = []
+          definition["optlines"].append(self.parseQuad(line))
 
-    return definition;
+    return definition
         
   def parsePart(self, line):
-    myDef = {};
-    splitLine = line.split();
+    myDef = {}
+    splitLine = line.split()
     
-    myDef["color"] = splitLine[1];
+    myDef["color"] = splitLine[1]
     myDef["matrix"] = (
       splitLine[5],  splitLine[6],  splitLine[7],  splitLine[2],
       splitLine[8],  splitLine[9],  splitLine[10], splitLine[3],
       splitLine[11], splitLine[12], splitLine[13], splitLine[4],
       0,             0,             0,             1,
-    );
-    myDef["partId"] = self.formatPartName(splitLine[14]);
+    )
+    myDef["partId"] = self.formatPartName(" ".join(splitLine[14:]))
     
     if myDef["partId"] not in self._parts:
-      filePath = self.findFile(myDef["partId"]);
+      filePath = self.findFile(myDef["partId"])
       
       if filePath != None:
-        self.log("Caching Part: "+self.findFile(myDef["partId"]), 4);
-        f = open(filePath, 'r');
-        self._parts[myDef["partId"]] = self.buildPartData(f.read());
+        self.log("Caching Part: "+self.findFile(myDef["partId"]), 4)
+        f = open(filePath, 'r')
+        self._parts[myDef["partId"]] = self.buildPartData(f.read())
         
-    return myDef;
+    return myDef
 
   def parseComment(self, comment):
-    return comment;
+    return comment
     
   def parseLine(self, line):
-    splitLine = line.split();
+    splitLine = line.split()
     myDef = {
       "color": splitLine[1],
       "pos1": (splitLine[2], splitLine[3], splitLine[4]),
       "pos2": (splitLine[5], splitLine[6], splitLine[7]),
-    };
-    return myDef;
+    }
+    return myDef
     
   def parseTri(self, line):
-    splitLine = line.split();
+    splitLine = line.split()
     myDef = {
       "color": splitLine[1],
       "pos1": (splitLine[2], splitLine[3], splitLine[4]),
       "pos2": (splitLine[5], splitLine[6], splitLine[7]),
       "pos3": (splitLine[8], splitLine[9], splitLine[10]),
-    };
-    return myDef;
+    }
+    return myDef
 
   def parseQuad(self, line):
-    splitLine = line.split();
+    splitLine = line.split()
     myDef = {
       "color": splitLine[1],
       "pos1": (splitLine[2], splitLine[3], splitLine[4]),
       "pos2": (splitLine[5], splitLine[6], splitLine[7]),
       "pos3": (splitLine[8], splitLine[9], splitLine[10]),
       "pos4": (splitLine[11], splitLine[12], splitLine[13]),
-    };
-    return myDef;
+    }
+    return myDef
 
   def parseOptLine(self, line):
-    splitLine = line.split();
+    splitLine = line.split()
     myDef = {
       "color": splitLine[1],
       "pos1": (splitLine[2], splitLine[3], splitLine[4]),
       "pos2": (splitLine[5], splitLine[6], splitLine[7]),
       "ctl1": (splitLine[8], splitLine[9], splitLine[10]),
       "ctl2": (splitLine[11], splitLine[12], splitLine[13]),
-    };
-    return myDef;
+    }
+    return myDef
   
   # TODO: Make less-ugly. It's remarkably fast at the moment though.
   def findFile(self, filePath):
-    locatedFile = None;
+    locatedFile = None
     
     # Try files relative to the main file first.
     if not locatedFile:
       if os.path.isfile(os.path.dirname(os.path.abspath(self.startFile))+os.path.sep+filePath):
-        locatedFile = filePath;
+        locatedFile = filePath
 
     # Try the immediate paths first, sub-directories are often specified using the path separator.
     if not locatedFile:
       if os.path.isfile(self.libraryLocation+os.path.sep+"parts"+os.path.sep+filePath):
-        locatedFile = self.libraryLocation+os.path.sep+"parts"+os.path.sep+filePath;
+        locatedFile = self.libraryLocation+os.path.sep+"parts"+os.path.sep+filePath
         
     if not locatedFile:
       if os.path.isfile(self.libraryLocation+os.path.sep+"p"+os.path.sep+filePath):
-        locatedFile = self.libraryLocation+os.path.sep+"p"+os.path.sep+filePath;
+        locatedFile = self.libraryLocation+os.path.sep+"p"+os.path.sep+filePath
     
     if not locatedFile:
       if os.path.isfile(self.libraryLocation+os.path.sep+"Unofficial"+os.path.sep+"parts"+filePath):
-        locatedFile = self.libraryLocation+os.path.sep+"Unofficial"+os.path.sep+"parts"+filePath;
+        locatedFile = self.libraryLocation+os.path.sep+"Unofficial"+os.path.sep+"parts"+filePath
     
     # Failing that, recursively search through every directory in the library folder for the file.
     if not locatedFile:
       for file in locate(os.path.basename(filePath), self.libraryLocation):
-        locatedFile = file;
-        break;
+        locatedFile = file
+        break
 
     # Try the current directory.
     if not locatedFile:
       if os.path.isfile(filePath):
-        locatedFile = filePath;
+        locatedFile = filePath
     
     if not locatedFile:
-      self.log("Error: File not found: {0}".format(filePath), 1);
+      self.log("Error: File not found: {0}".format(filePath), 1)
 
-    return locatedFile;
+    return locatedFile
     
   def formatPartName(self, partName):
-    return partName.lower().replace("\\", os.path.sep).replace("/", os.path.sep);
+    return partName.lower().replace("\\", os.path.sep).replace("/", os.path.sep)
 
   def log(self, string, level=0):
     if self.options["logLevel"] >= level:
-      print("[LDRParser] {0}".format(string));
+      print("[LDRParser] {0}".format(string))
   
 def locate(pattern, root=os.curdir):
   for path, dirs, files in os.walk(os.path.abspath(root)):
     for filename in fnmatch.filter(files, pattern):
-      yield os.path.join(path, filename);
+      yield os.path.join(path, filename)

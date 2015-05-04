@@ -38,7 +38,7 @@ class LDRParser:
 
     options = {
         "skip": [],
-        "logLevel": 0,
+        "logLevel": 0
     }
 
     _parts = {}
@@ -179,43 +179,51 @@ class LDRParser:
         }
         return myDef
 
-    # TODO: Make less-ugly. It's remarkably fast at the moment though.
-    def findFile(self, filePath):
+    def findFile(self, partPath):
+        """Locate a part in the LDraw parts installation.
+
+        @param {String} partPath The part name that needs to be located.
+        @return {String} The full file path to the given part.
+        """
         locatedFile = None
 
-        # Try files relative to the main file first.
-        if not locatedFile:
-            if os.path.isfile(os.path.dirname(os.path.abspath(self.startFile))+os.path.sep+filePath):
-                locatedFile = filePath
+        # In the order we search:
+        #   * Files relative to the main file
+        #   * Models folder
+        #   * Unofficial parts (parts and p subfolders)
+        #   * Parts folder
+        #   * p folder
+        paths = [
+            os.path.join(os.path.dirname(os.path.abspath(self.startFile)),
+                         partPath),
+            os.path.join(self.libraryLocation, "models", partPath),
+            os.path.join(self.libraryLocation, "Unofficial", "parts",
+                         partPath),
+            os.path.join(self.libraryLocation, "Unofficial", "p", partPath),
+            os.path.join(self.libraryLocation, "parts", partPath),
+            os.path.join(self.libraryLocation, "p", partPath)
+        ]
 
-        # Try the immediate paths first, sub-directories are often specified using the path separator.
-        if not locatedFile:
-            if os.path.isfile(self.libraryLocation+os.path.sep+"parts"+os.path.sep+filePath):
-                locatedFile = self.libraryLocation+os.path.sep+"parts"+os.path.sep+filePath
-
-        if not locatedFile:
-            if os.path.isfile(self.libraryLocation+os.path.sep+"p"+os.path.sep+filePath):
-                locatedFile = self.libraryLocation+os.path.sep+"p"+os.path.sep+filePath
-
-        if not locatedFile:
-            if os.path.isfile(self.libraryLocation+os.path.sep+"Unofficial"+os.path.sep+"parts"+filePath):
-                locatedFile = self.libraryLocation+os.path.sep+"Unofficial"+os.path.sep+"parts"+filePath
+        for path in paths:
+            if os.path.isfile(path):
+                locatedFile = path
+                break
 
         # Failing that, recursively search through every directory
         # in the library folder for the file.
         if not locatedFile:
-            for file in locate(os.path.basename(filePath),
+            for file in locate(os.path.basename(partPath),
                                self.libraryLocation):
                 locatedFile = file
                 break
 
         # Try the current directory.
         if not locatedFile:
-            if os.path.isfile(filePath):
-                locatedFile = filePath
+            if os.path.isfile(partPath):
+                locatedFile = partPath
 
         if not locatedFile:
-            self.log("Error: File not found: {0}".format(filePath), 1)
+            self.log("Error: File not found: {0}".format(partPath), 1)
 
         return locatedFile
 

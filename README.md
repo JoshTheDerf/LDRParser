@@ -30,7 +30,7 @@ Download `libldrparser.py`.
 From your project, import LDRParser from libldrparser (`from libldrparser import LDRParser`)
 
 Create an instance of LDRParser, this allows the part cache to persist across multiple conversions for a model and greatly speeds up subsequent runs.
-```
+```python
 parser = LDRParser("PATH/TO/LDRAW/LIBRARY", "PATH/TO/TARGET/MODEL", {
   # Options
   "skip": [], # A list of line control codes to skip. Valid codes: ("COMMENT", "SUBPART", "LINE", "TRI", "QUAD", "OPTLINE")

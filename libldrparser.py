@@ -51,10 +51,12 @@ class LDRParser:
     def fromLDR(self):
         if len(self.options["skip"]) > 0:
             self.log("Skip: {0}".format(", ".join(self.options["skip"])), 5)
-        # This can load any valid file on the LDraw path with the specified name, not just a full path.
+
+        # This can load any valid file on the LDraw path
+        # with the specified name, not just a full path.
         filePath = self.findFile(self.startFile)
 
-        if filePath == None:
+        if filePath is None:
             self.log("Critical Error - File Not Found: {0}".format(filePath), 0)
             return None
 
@@ -126,7 +128,7 @@ class LDRParser:
         if myDef["partId"] not in self._parts:
             filePath = self.findFile(myDef["partId"])
 
-        if filePath != None:
+        if filePath is not None:
             self.log("Caching Part: "+self.findFile(myDef["partId"]), 4)
             f = open(filePath, 'r')
             self._parts[myDef["partId"]] = self.buildPartData(f.read())
@@ -199,9 +201,11 @@ class LDRParser:
             if os.path.isfile(self.libraryLocation+os.path.sep+"Unofficial"+os.path.sep+"parts"+filePath):
                 locatedFile = self.libraryLocation+os.path.sep+"Unofficial"+os.path.sep+"parts"+filePath
 
-        # Failing that, recursively search through every directory in the library folder for the file.
+        # Failing that, recursively search through every directory
+        # in the library folder for the file.
         if not locatedFile:
-            for file in locate(os.path.basename(filePath), self.libraryLocation):
+            for file in locate(os.path.basename(filePath),
+                               self.libraryLocation):
                 locatedFile = file
                 break
 

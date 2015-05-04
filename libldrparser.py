@@ -108,7 +108,7 @@ class LDRParser:
                 elif code == "OPTLINE":
                     if "optlines" not in definition:
                         definition["optlines"] = []
-                definition["optlines"].append(self.parseQuad(line))
+                    definition["optlines"].append(self.parseQuad(line))
 
         return definition
 
@@ -128,10 +128,10 @@ class LDRParser:
         if myDef["partId"] not in self._parts:
             filePath = self.findFile(myDef["partId"])
 
-        if filePath is not None:
-            self.log("Caching Part: "+self.findFile(myDef["partId"]), 4)
-            f = open(filePath, 'r')
-            self._parts[myDef["partId"]] = self.buildPartData(f.read())
+            if filePath is not None:
+                self.log("Caching Part: "+self.findFile(myDef["partId"]), 4)
+                f = open(filePath, 'r')
+                self._parts[myDef["partId"]] = self.buildPartData(f.read())
 
         return myDef
 

@@ -197,7 +197,6 @@ A basic file looks like this:
  * Support for various encodings.
  * Support for part metas and comment processing.
  * Document the code
- * Make file-searching a bit more foolproof, though it is remarkably fast at the moment.
  * Conversion back to LDR files.
  * Flattening of format, so that the only things stored are those necessary for drawing. (Vertices, Indices, and Colors, really.) Requires decent knowledge of Linear Algebra and 4x4 Matrices.
 

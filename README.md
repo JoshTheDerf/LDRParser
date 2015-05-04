@@ -13,7 +13,7 @@ and any options you may like.
 
 **Options:**
 
-* `-s= [Comma-separated string. Values: COMMENT,SUBPART,LINE,TRI,QUAD,OPTLINE] Line control codes to skip.
+* `-s= [Comma-separated string. Values: COMMENT,SUBPART,LINE,TRI,QUAD,OPTLINE]` Line control codes to skip.
 * `-m=false [false|true]` Whether to minify the output (don't pretty-print it) or not.
 * `-o=json [json|dict]` Output format: JSON or Python Dictionary.
 * `-l=0 [0-5]` Logging Level. Log level 0 displays nothing other than the output, 5 is verbose.
@@ -27,8 +27,7 @@ Additionally, any file within (no matter what depth) the ldraw directory can be 
 
 ##Usage (Python Module)
 Download `libldrparser.py`.
-From your project, import LDRParser from libldrparser (`from libldrparser import LDRParser;
-`)
+From your project, import LDRParser from libldrparser (`from libldrparser import LDRParser`)
 
 Create an instance of LDRParser, this allows the part cache to persist across multiple conversions for a model and greatly speeds up subsequent runs.
 ```
@@ -36,10 +35,10 @@ parser = LDRParser("PATH/TO/LDRAW/LIBRARY", "PATH/TO/TARGET/MODEL", {
   # Options
   "skip": [], # A list of line control codes to skip. Valid codes: ("COMMENT", "SUBPART", "LINE", "TRI", "QUAD", "OPTLINE")
   "logLevel": 0
-});
+})
 
 # Do the actual conversion. output is a python dictionary using the format described below.
-output = parser.fromLDR();
+output = parser.fromLDR()
 ```
 
 ##Format:

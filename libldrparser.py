@@ -22,6 +22,8 @@ SOFTWARE.
 
 """
 
+from __future__ import print_function
+
 import os
 import fnmatch
 
@@ -127,7 +129,7 @@ class LDRParser:
                 elif code == "OPTLINE":
                     if "optlines" not in definition:
                         definition["optlines"] = []
-                    definition["optlines"].append(self.parseQuad(line))
+                    definition["optlines"].append(self.parseOptLine(line))
 
         return definition
 

@@ -33,10 +33,13 @@ from libldrparser import LDRParser
 if __name__ == '__main__':
 
     def printHelp():
-        print("[LDRParser {0}] Usage: python ldrparser.py PATH/TO/LDRAW/LIBRARY PATH/TO/FILE/FOR/PARSING [options]"
+        print("""\n[LDRParser {0}]
+Usage: ldrparser.py PATH/TO/LDRAW/LIBRARY PATH/TO/FILE/FOR/PARSING [options]"""
               .format(".".join(LDRParser.version)))
-        print("Options:")
-        print("  -s= [Comma-separated string. Values: COMMENT,SUBPART,LINE,TRI,QUAD,OPTLINE] Line control codes to skip.")
+        print("\nOptions:")
+        print("""  -s= [Comma-separated string. Values:
+       {0}] Line control codes to skip.""".format(
+              ",".join(LDRParser.ControlCodes)))
         print("  -l=0 [0-5] Log Level")
         print("  -o=dict [dict, json] Format to output")
         print("  -m=false [true|false] Minify output")

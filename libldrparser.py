@@ -30,23 +30,28 @@ class LDRParser:
     version = ("0", "1", "0")
     ControlCodes = ("COMMENT", "SUBPART", "LINE", "TRI", "QUAD", "OPTLINE")
 
-    def getCode(self, num):
-        print(self.ControlCodes)
-
-    libraryLocation = ""
-    startFile = ""
-
     options = {
         "skip": [],
         "logLevel": 0
     }
 
-    _parts = {}
-
-    def __init__(self, libraryLocation, startFile, options={}):
+    def __init__(self, libraryLocation="", startFile="", options={}):
         self.libraryLocation = libraryLocation
         self.startFile = startFile
+        self.__parts = {}
         self.options.update(options)
+
+    def log(self, string, level=0):
+        """Log debug messages to the console.
+
+        @param {String} string The message to be displayed.
+        @param {Number} level Specify the message verbosity level.
+                              If the specified level is less than
+                              or equal to the level given in the options,
+                              the message will be printed.
+        """
+        if self.options["logLevel"] >= level:
+            print("[LDRParser] {0}".format(string))
 
     def fromLDR(self):
         if len(self.options["skip"]) > 0:
@@ -56,14 +61,17 @@ class LDRParser:
         # with the specified name, not just a full path.
         filePath = self.findFile(self.startFile)
 
+        # The file could not be found.
         if filePath is None:
-            self.log("Critical Error - File Not Found: {0}".format(filePath), 0)
+            self.log("Critical Error - File Not Found: {0}".format(
+                     filePath), 0)
             return None
 
+        #  Begin parsing the model and all the parts.
         self.log("Reading Initial File: {0}".format(filePath), 3)
-        f = open(filePath, 'r')
-        root = self.buildPartData(f.read())
-        root["parts"] = self._parts
+        with open(filePath, "r") as f:
+            root = self.buildPartData(f.read())
+        root["parts"] = self.__parts
 
         self.log("Completed Parsing File: {0}".format(filePath), 3)
         return root
@@ -125,13 +133,15 @@ class LDRParser:
         )
         myDef["partId"] = self.formatPartName(" ".join(splitLine[14:]))
 
-        if myDef["partId"] not in self._parts:
+        if myDef["partId"] not in self.__parts:
             filePath = self.findFile(myDef["partId"])
 
             if filePath is not None:
-                self.log("Caching Part: "+self.findFile(myDef["partId"]), 4)
-                f = open(filePath, 'r')
-                self._parts[myDef["partId"]] = self.buildPartData(f.read())
+                self.log("Caching Part: {0}".format(
+                         self.findFile(myDef["partId"])), 4)
+                with open(filePath, "r") as f:
+                    self.__parts[myDef["partId"]] = \
+                        self.buildPartData(f.read())
 
         return myDef
 
@@ -204,35 +214,42 @@ class LDRParser:
             os.path.join(self.libraryLocation, "p", partPath)
         ]
 
-        for path in paths:
-            if os.path.isfile(path):
-                locatedFile = path
-                break
+        # Try the current directory.
+        if os.path.isfile(partPath):
+            locatedFile = partPath
+
+        # Now lets check the list of paths we built earlier.
+        if not locatedFile:
+            for path in paths:
+                if os.path.isfile(path):
+                    locatedFile = path
+                    break
 
         # Failing that, recursively search through every directory
         # in the library folder for the file.
         if not locatedFile:
-            for file in locate(os.path.basename(partPath),
-                               self.libraryLocation):
-                locatedFile = file
+            for f in locate(os.path.basename(partPath),
+                            self.libraryLocation):
+                locatedFile = f
                 break
 
-        # Try the current directory.
-        if not locatedFile:
-            if os.path.isfile(partPath):
-                locatedFile = partPath
-
+        # We are totally unable to find that part.
         if not locatedFile:
             self.log("Error: File not found: {0}".format(partPath), 1)
 
         return locatedFile
 
     def formatPartName(self, partName):
-        return partName.lower().replace("\\", os.path.sep).replace("/", os.path.sep)
+        """Clean up any path seperators
+        to be consistent with the platform
+        and convert the file name to lowercase.
 
-    def log(self, string, level=0):
-        if self.options["logLevel"] >= level:
-            print("[LDRParser] {0}".format(string))
+        @param {String} The part path to clean up.
+        @return {String}
+        """
+        return partName.lower().replace("\\",
+                                        os.path.sep).replace("/",
+                                                             os.path.sep)
 
 
 def locate(pattern, root=os.curdir):

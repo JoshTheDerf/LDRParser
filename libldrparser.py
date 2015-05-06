@@ -54,6 +54,7 @@ class LDRParser:
             print("[LDRParser] {0}".format(string))
 
     def fromLDR(self):
+        # Display the line types we are going to skip parsing.
         if len(self.options["skip"]) > 0:
             self.log("Skip: {0}".format(", ".join(self.options["skip"])), 5)
 
@@ -67,7 +68,7 @@ class LDRParser:
                      filePath), 0)
             return None
 
-        #  Begin parsing the model and all the parts.
+        # Begin parsing the model and all the parts.
         self.log("Reading Initial File: {0}".format(filePath), 3)
         with open(filePath, "r") as f:
             root = self.buildPartData(f.read())
@@ -81,38 +82,48 @@ class LDRParser:
         lines = ldrString.splitlines()
 
         for line in lines:
+            # Determine the type of line this is.
             ctrl = int(line.lstrip()[0] if line.lstrip() else -1)
+
+            # Ignore invalid line types
             if ctrl == -1:
                 continue
 
-            code = self.ControlCodes[int(ctrl)]
-
+            # We are not skipping this line type.
+            code = self.ControlCodes[ctrl]
             if code not in self.options["skip"]:
+
+                # Parse the comments.
                 if code == "COMMENT":
                     if "comments" not in definition:
                         definition["comments"] = []
                     definition["comments"].append(self.parseComment(line))
 
+                # Parse the subparts.
                 elif code == "SUBPART":
                     if "subparts" not in definition:
                         definition["subparts"] = []
                     definition["subparts"].append(self.parsePart(line))
 
+                # Parse the straight lines.
                 elif code == "LINE":
                     if "lines" not in definition:
                         definition["lines"] = []
                     definition["lines"].append(self.parseLine(line))
 
+                # Parse the triangles.
                 elif code == "TRI":
                     if "tris" not in definition:
                         definition["tris"] = []
                     definition["tris"].append(self.parseTri(line))
 
+                # Parse the quadrilaterals.
                 elif code == "QUAD":
                     if "quads" not in definition:
                         definition["quads"] = []
                     definition["quads"].append(self.parseQuad(line))
 
+                # Parse the optional lines.
                 elif code == "OPTLINE":
                     if "optlines" not in definition:
                         definition["optlines"] = []
@@ -133,12 +144,16 @@ class LDRParser:
         )
         myDef["partId"] = self.formatPartName(" ".join(splitLine[14:]))
 
+        # The part is not in the cache.
         if myDef["partId"] not in self.__parts:
             filePath = self.findFile(myDef["partId"])
 
+            # We have a file path.
             if filePath is not None:
                 self.log("Caching Part: {0}".format(
                          self.findFile(myDef["partId"])), 4)
+
+                # Read and cache the part contents.
                 with open(filePath, "r") as f:
                     self.__parts[myDef["partId"]] = \
                         self.buildPartData(f.read())
@@ -146,7 +161,7 @@ class LDRParser:
         return myDef
 
     def parseComment(self, comment):
-        return comment
+        return comment.lstrip("0 ")
 
     def parseLine(self, line):
         splitLine = line.split()
@@ -198,11 +213,11 @@ class LDRParser:
         locatedFile = None
 
         # In the order we search:
-        #   * Files relative to the main file
-        #   * Models folder
-        #   * Unofficial parts (parts and p subfolders)
-        #   * Parts folder
-        #   * p folder
+        #  * Files relative to the main file
+        #  * Models folder
+        #  * Unofficial parts (parts and p subfolders)
+        #  * Parts folder
+        #  * p folder
         paths = [
             os.path.join(os.path.dirname(os.path.abspath(self.startFile)),
                          partPath),

@@ -69,7 +69,7 @@ class LDRParser:
 
         # Display the line types we are going to skip parsing.
         if len(self.options["skip"]) > 0:
-            self.log("Skip: {0}".format(", ".join(self.options["skip"])), 5)
+            self.log("Skip line type(s): {0}".format(", ".join(self.options["skip"])), 5)
 
         # This can load any valid file on the LDraw path
         # with the specified name, not just a full path.

@@ -69,7 +69,8 @@ class LDRParser:
 
         # Display the line types we are going to skip parsing.
         if len(self.options["skip"]) > 0:
-            self.log("Skip line type(s): {0}".format(", ".join(self.options["skip"])), 5)
+            self.log("Skip line type(s): {0}".format(
+                     ", ".join(self.options["skip"])), 5)
 
         # This can load any valid file on the LDraw path
         # with the specified name, not just a full path.
@@ -110,7 +111,11 @@ class LDRParser:
                 if code == "COMMENT":
                     if "comments" not in definition:
                         definition["comments"] = []
-                    definition["comments"].append(self.parseComment(line))
+
+                    # Make sure there is a comment to add
+                    comment = self.parseComment(line)
+                    if comment is not None:
+                        definition["comments"].append(comment)
 
                 # Parse the subparts.
                 elif code == "SUBPART":
@@ -173,7 +178,21 @@ class LDRParser:
         return myDef
 
     def parseComment(self, comment):
-        return comment.lstrip("0 ")
+        """Perform basic comment processing, including
+        minor filtering and cleanup.
+
+        @param {String} comment The comment to process.
+        @return {!String} The cleaned comment, or None if it was filtered.
+        """
+        # Strip the prefix
+        comment = comment.strip().lstrip("0 ")
+
+        # Filter out archaic META commands, blank lines, and comments
+        # See http://www.ldraw.org/article/218/#meta
+        lineFilter = ("", "STEP", "WRITE", "PRINT", "CLEAR", "PAUSE", "SAVE")
+        if comment in lineFilter or comment.startswith("//"):
+            return None
+        return comment
 
     def parseLine(self, line):
         splitLine = line.split()

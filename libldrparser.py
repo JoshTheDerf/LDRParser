@@ -27,6 +27,8 @@ from __future__ import print_function
 import os
 import fnmatch
 
+__all__ = ("LDRParser")
+
 
 class LDRParser:
     version = ("0", "1", "0")
@@ -42,6 +44,12 @@ class LDRParser:
         self.modelFile = None
         self.__parts = {}
         self.options.update(options)
+
+    @staticmethod
+    def __locate(pattern, root=os.curdir):
+        for path, dirs, files in os.walk(os.path.abspath(root)):
+            for filename in fnmatch.filter(files, pattern):
+                yield os.path.join(path, filename)
 
     def log(self, string, level=0):
         """Log debug messages to the console.
@@ -61,7 +69,7 @@ class LDRParser:
 
         # Display the line types we are going to skip parsing.
         if len(self.options["skip"]) > 0:
-            self.log("Skip: {0}".format(", ".join(self.options["skip"])), 5)
+            self.log("Skip line type(s): {0}".format(", ".join(self.options["skip"])), 5)
 
         # This can load any valid file on the LDraw path
         # with the specified name, not just a full path.
@@ -70,7 +78,7 @@ class LDRParser:
         # The file could not be found.
         if filePath is None:
             self.log("Critical Error - File Not Found: {0}".format(
-                     filePath), 0)
+                     self.modelFile), 0)
             return None
 
         # Begin parsing the model and all the parts.
@@ -155,8 +163,7 @@ class LDRParser:
 
             # We have a file path.
             if filePath is not None:
-                self.log("Caching Part: {0}".format(
-                         self.findFile(myDef["partId"])), 4)
+                self.log("Caching Part: {0}".format(filePath), 4)
 
                 # Read and cache the part contents.
                 with open(filePath, "r") as f:
@@ -248,8 +255,8 @@ class LDRParser:
         # Failing that, recursively search through every directory
         # in the library folder for the file.
         if not locatedFile:
-            for f in locate(os.path.basename(partPath),
-                            self.libraryLocation):
+            for f in self.__locate(os.path.basename(partPath),
+                                   self.libraryLocation):
                 locatedFile = f
                 break
 
@@ -270,9 +277,3 @@ class LDRParser:
         return partName.lower().replace("\\",
                                         os.path.sep).replace("/",
                                                              os.path.sep)
-
-
-def locate(pattern, root=os.curdir):
-    for path, dirs, files in os.walk(os.path.abspath(root)):
-        for filename in fnmatch.filter(files, pattern):
-            yield os.path.join(path, filename)

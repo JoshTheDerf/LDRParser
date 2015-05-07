@@ -44,7 +44,7 @@ Usage: ldrparser.py PATH/TO/LDRAW/LIBRARY PATH/TO/FILE/FOR/PARSING [options]"""
               ",".join(LDRParser.ControlCodes)))
         print("  -l=0 [0-5] Log Level")
         print("  -o=dict [dict, json] Format to output")
-        print("  -m=false [true|false] Minify output")
+        print("  -m Minify output")
         print("  -h, --help Show this help text.")
 
     if len(sys.argv) < 3:
@@ -65,8 +65,8 @@ Usage: ldrparser.py PATH/TO/LDRAW/LIBRARY PATH/TO/FILE/FOR/PARSING [options]"""
             options["logLevel"] = int(arg[3:])
         elif "-o=" in arg:
             options["output"] = arg[3:].lower()
-        elif "-m=" in arg:
-            options["minify"] = arg[3:].lower() in ("true", "yes", "t", "1")
+        elif "-m" in arg:
+            options["minify"] = True
         elif "-h" in arg or "--help" in arg:
             printHelp()
             sys.exit(0)

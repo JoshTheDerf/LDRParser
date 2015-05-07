@@ -37,9 +37,9 @@ class LDRParser:
         "logLevel": 0
     }
 
-    def __init__(self, libraryLocation="", startFile="", options={}):
+    def __init__(self, libraryLocation, options={}):
         self.libraryLocation = libraryLocation
-        self.startFile = startFile
+        self.modelFile = None
         self.__parts = {}
         self.options.update(options)
 
@@ -55,14 +55,17 @@ class LDRParser:
         if self.options["logLevel"] >= level:
             print("[LDRParser] {0}".format(string))
 
-    def fromLDR(self):
+    def parse(self, modelFile):
+        # Set the model to be read
+        self.modelFile = modelFile
+
         # Display the line types we are going to skip parsing.
         if len(self.options["skip"]) > 0:
             self.log("Skip: {0}".format(", ".join(self.options["skip"])), 5)
 
         # This can load any valid file on the LDraw path
         # with the specified name, not just a full path.
-        filePath = self.findFile(self.startFile)
+        filePath = self.findFile(self.modelFile)
 
         # The file could not be found.
         if filePath is None:
@@ -221,7 +224,7 @@ class LDRParser:
         #  * Parts folder
         #  * p folder
         paths = [
-            os.path.join(os.path.dirname(os.path.abspath(self.startFile)),
+            os.path.join(os.path.dirname(os.path.abspath(self.modelFile)),
                          partPath),
             os.path.join(self.libraryLocation, "models", partPath),
             os.path.join(self.libraryLocation, "Unofficial", "parts",

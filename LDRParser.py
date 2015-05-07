@@ -71,8 +71,8 @@ Usage: ldrparser.py PATH/TO/LDRAW/LIBRARY PATH/TO/FILE/FOR/PARSING [options]"""
             printHelp()
             sys.exit(0)
 
-    parser = LDRParser(sys.argv[1], sys.argv[2], options)
-    out = parser.fromLDR()
+    parser = LDRParser(sys.argv[1], options)
+    out = parser.parse(sys.argv[2])
 
     if options["output"] == "dict":
         if options["minify"]:

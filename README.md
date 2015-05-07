@@ -14,7 +14,7 @@ and any options you may like.
 **Options:**
 
 * `-s= [Comma-separated string. Values: COMMENT,SUBPART,LINE,TRI,QUAD,OPTLINE]` Line control codes to skip.
-* `-m=false [false|true]` Whether to minify the output (don't pretty-print it) or not.
+* `-m` Whether to minify the output (don't pretty-print it) or not.
 * `-o=json [json|dict]` Output format: JSON or Python Dictionary.
 * `-l=0 [0-5]` Logging Level. Log level 0 displays nothing other than the output, 5 is verbose.
 
@@ -31,14 +31,15 @@ From your project, import LDRParser from libldrparser (`from libldrparser import
 
 Create an instance of LDRParser, this allows the part cache to persist across multiple conversions for a model and greatly speeds up subsequent runs.
 ```python
-parser = LDRParser("PATH/TO/LDRAW/LIBRARY", "PATH/TO/TARGET/MODEL", {
+parser = LDRParser("PATH/TO/LDRAW/LIBRARY", {
   # Options
-  "skip": [], # A list of line control codes to skip. Valid codes: ("COMMENT", "SUBPART", "LINE", "TRI", "QUAD", "OPTLINE")
+  "skip": [],
   "logLevel": 0
 })
 
-# Do the actual conversion. output is a python dictionary using the format described below.
-output = parser.fromLDR()
+# Do the actual conversion.
+# Output is a python dictionary using the format described below.
+output = parser.parse("PATH/TO/TARGET/MODEL")
 ```
 
 ##Format:
@@ -55,8 +56,9 @@ A basic file looks like this:
         {
           // The id of the part in the parts object.
           "partId": "4-4edge.dat"
-          "color": "16", // Raw color from the LDR file. I may add conversion for this in the future.
-          "matrix": [ // Transformation martix for this sub-part.
+          "color": "16", // Raw color from the LDR file.
+          // Transformation martix for this sub-part.
+          "matrix": [
             "4",
             "0",
             "0",
@@ -76,7 +78,8 @@ A basic file looks like this:
           ],
         }
       ],
-      "lines": [ // Defines a line from pos1 to pos2.
+      // Defines a line from pos1 to pos2.
+      "lines": [
         {
           "color": "16",
           "pos1": [
@@ -91,7 +94,8 @@ A basic file looks like this:
           ],
         }
       ],
-      "tris": [ // Defines a triangle. Vertices are pos1, pos2, and pos3.
+      // Defines a triangle. Vertices are pos1, pos2, and pos3.
+      "tris": [
         {
           "color": "16",
           "pos1": [
@@ -111,7 +115,8 @@ A basic file looks like this:
           ],
         },
       ],
-      "quads": [ // Defines a quad. Vertices are pos1, pos2, pos3, and pos4.
+      // Defines a quad. Vertices are pos1, pos2, pos3, and pos4.
+      "quads": [
         {
           "color": "16",
           "pos1": [
@@ -136,7 +141,10 @@ A basic file looks like this:
           ]
         },
       ],
-      "optlines": [ // Defines a line which is only visible based on certain rules. See http://www.ldraw.org/article/218.html, line type 5. pos1 and 2 define the line vertices, ctl1 and 2 are the control points.
+      // Defines a line which is only visible based on certain rules.
+      // See http://www.ldraw.org/article/218.html,
+      // line type 5. pos1 and 2 define the line vertices, ctl1 and 2 are the control points.
+      "optlines": [
         {
           "color": "16",
           "pos1": [
@@ -192,7 +200,6 @@ A basic file looks like this:
 ```
 
 ##TODO:
- * Better code formatting. Use PEP8.
  * Support for mpd files.
  * Support for various encodings.
  * Support for part metas and comment processing.

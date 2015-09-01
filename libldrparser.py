@@ -51,6 +51,22 @@ class LDRParser:
             for filename in fnmatch.filter(files, pattern):
                 yield os.path.join(path, filename)
 
+    @staticmethod
+    def __convert(vals):
+        for i in range(0, len(vals)):
+            line = vals[i]
+            # Floats
+            if "." in line and "dat" not in line.lower():
+                vals[i] = float(line)
+            else:
+                try:
+                    # Integers
+                    vals[i] = int(line)
+                # Strings
+                except ValueError:
+                    pass
+        return vals
+
     def log(self, string, level=0):
         """Log debug messages to the console.
 
@@ -84,7 +100,7 @@ class LDRParser:
 
         # Begin parsing the model and all the parts.
         self.log("Reading Initial File: {0}".format(filePath), 3)
-        with open(filePath, "r") as f:
+        with open(filePath, "rt") as f:
             root = self.buildPartData(f.read())
         root["parts"] = self.__parts
 
@@ -103,17 +119,23 @@ class LDRParser:
             if ctrl == -1:
                 continue
 
-            # We are not skipping this line type.
+            # Determine the control code
             code = self.ControlCodes[ctrl]
+
+            # Always parse comments so we can get the part type
+            comment = self.parseComment(line)
+            if comment is not None and comment.startswith("!LDRAW_ORG"):
+                definition["partType"] = self.getPartType(comment)
+
+            # We are not skipping this line type.
             if code not in self.options["skip"]:
 
-                # Parse the comments.
+                # Include the comments.
                 if code == "COMMENT":
                     if "comments" not in definition:
                         definition["comments"] = []
 
                     # Make sure there is a comment to add
-                    comment = self.parseComment(line)
                     if comment is not None:
                         definition["comments"].append(comment)
 
@@ -149,9 +171,12 @@ class LDRParser:
 
         return definition
 
+    def getPartType(self, line):
+        return line.split()[1]
+
     def parsePart(self, line):
         myDef = {}
-        splitLine = line.split()
+        splitLine = self.__convert(line.split())
 
         myDef["color"] = splitLine[1]
         myDef["matrix"] = (
@@ -171,7 +196,7 @@ class LDRParser:
                 self.log("Caching Part: {0}".format(filePath), 4)
 
                 # Read and cache the part contents.
-                with open(filePath, "r") as f:
+                with open(filePath, "rt") as f:
                     self.__parts[myDef["partId"]] = \
                         self.buildPartData(f.read())
 
@@ -195,7 +220,7 @@ class LDRParser:
         return comment
 
     def parseLine(self, line):
-        splitLine = line.split()
+        splitLine = self.__convert(line.split())
         myDef = {
             "color": splitLine[1],
             "pos1": (splitLine[2], splitLine[3], splitLine[4]),
@@ -204,7 +229,7 @@ class LDRParser:
         return myDef
 
     def parseTri(self, line):
-        splitLine = line.split()
+        splitLine = self.__convert(line.split())
         myDef = {
             "color": splitLine[1],
             "pos1": (splitLine[2], splitLine[3], splitLine[4]),
@@ -214,7 +239,7 @@ class LDRParser:
         return myDef
 
     def parseQuad(self, line):
-        splitLine = line.split()
+        splitLine = self.__convert(line.split())
         myDef = {
             "color": splitLine[1],
             "pos1": (splitLine[2], splitLine[3], splitLine[4]),
@@ -225,7 +250,7 @@ class LDRParser:
         return myDef
 
     def parseOptLine(self, line):
-        splitLine = line.split()
+        splitLine = self.__convert(line.split())
         myDef = {
             "color": splitLine[1],
             "pos1": (splitLine[2], splitLine[3], splitLine[4]),

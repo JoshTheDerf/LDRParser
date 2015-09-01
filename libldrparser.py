@@ -51,6 +51,22 @@ class LDRParser:
             for filename in fnmatch.filter(files, pattern):
                 yield os.path.join(path, filename)
 
+    @staticmethod
+    def __convert(vals):
+        for i in range(0, len(vals)):
+            line = vals[i]
+            # Floats
+            if "." in line and "dat" not in line.lower():
+                vals[i] = float(line)
+            else:
+                try:
+                    # Integers
+                    vals[i] = int(line)
+                # Strings
+                except ValueError:
+                    pass
+        return vals
+
     def log(self, string, level=0):
         """Log debug messages to the console.
 
@@ -151,7 +167,7 @@ class LDRParser:
 
     def parsePart(self, line):
         myDef = {}
-        splitLine = line.split()
+        splitLine = self.__convert(line.split())
 
         myDef["color"] = splitLine[1]
         myDef["matrix"] = (
@@ -195,7 +211,7 @@ class LDRParser:
         return comment
 
     def parseLine(self, line):
-        splitLine = line.split()
+        splitLine = self.__convert(line.split())
         myDef = {
             "color": splitLine[1],
             "pos1": (splitLine[2], splitLine[3], splitLine[4]),
@@ -204,7 +220,7 @@ class LDRParser:
         return myDef
 
     def parseTri(self, line):
-        splitLine = line.split()
+        splitLine = self.__convert(line.split())
         myDef = {
             "color": splitLine[1],
             "pos1": (splitLine[2], splitLine[3], splitLine[4]),
@@ -214,7 +230,7 @@ class LDRParser:
         return myDef
 
     def parseQuad(self, line):
-        splitLine = line.split()
+        splitLine = self.__convert(line.split())
         myDef = {
             "color": splitLine[1],
             "pos1": (splitLine[2], splitLine[3], splitLine[4]),
@@ -225,7 +241,7 @@ class LDRParser:
         return myDef
 
     def parseOptLine(self, line):
-        splitLine = line.split()
+        splitLine = self.__convert(line.split())
         myDef = {
             "color": splitLine[1],
             "pos1": (splitLine[2], splitLine[3], splitLine[4]),

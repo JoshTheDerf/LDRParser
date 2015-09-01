@@ -100,7 +100,7 @@ class LDRParser:
 
         # Begin parsing the model and all the parts.
         self.log("Reading Initial File: {0}".format(filePath), 3)
-        with open(filePath, "r") as f:
+        with open(filePath, "rt") as f:
             root = self.buildPartData(f.read())
         root["parts"] = self.__parts
 
@@ -119,17 +119,23 @@ class LDRParser:
             if ctrl == -1:
                 continue
 
-            # We are not skipping this line type.
+            # Determine the control code
             code = self.ControlCodes[ctrl]
+
+            # Always parse comments so we can get the part type
+            comment = self.parseComment(line)
+            if comment is not None and comment.startswith("!LDRAW_ORG"):
+                definition["partType"] = self.getPartType(comment)
+
+            # We are not skipping this line type.
             if code not in self.options["skip"]:
 
-                # Parse the comments.
+                # Include the comments.
                 if code == "COMMENT":
                     if "comments" not in definition:
                         definition["comments"] = []
 
                     # Make sure there is a comment to add
-                    comment = self.parseComment(line)
                     if comment is not None:
                         definition["comments"].append(comment)
 
@@ -165,6 +171,9 @@ class LDRParser:
 
         return definition
 
+    def getPartType(self, line):
+        return line.split()[1]
+
     def parsePart(self, line):
         myDef = {}
         splitLine = self.__convert(line.split())
@@ -187,7 +196,7 @@ class LDRParser:
                 self.log("Caching Part: {0}".format(filePath), 4)
 
                 # Read and cache the part contents.
-                with open(filePath, "r") as f:
+                with open(filePath, "rt") as f:
                     self.__parts[myDef["partId"]] = \
                         self.buildPartData(f.read())
 

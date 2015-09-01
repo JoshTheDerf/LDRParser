@@ -201,7 +201,6 @@ A basic file looks like this:
 
 ##TODO:
  * Support for mpd files.
- * Support for various encodings.
  * Support for part metas and comment processing.
  * Document the code
  * Conversion back to LDR files.

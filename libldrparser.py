@@ -40,10 +40,11 @@ class LDRParser:
     }
 
     def __init__(self, libraryLocation, options={}):
+        self.options.update(options)
         self.libraryLocation = libraryLocation
         self.modelFile = None
         self.__parts = {}
-        self.options.update(options)
+        self.__searchPath = self.__getSearchPath()
 
     @staticmethod
     def __locate(pattern, root=os.curdir):
@@ -66,6 +67,31 @@ class LDRParser:
                 except ValueError:
                     pass
         return vals
+
+    def __getSearchPath(self):
+        """Generate the search path for traversing the LDraw library.
+
+        @return {List} A spec-compliant search path.
+        """
+        # Proper search order when looking for parts
+        #  * Files relative to the main file
+        #  * Models folder
+        #  * Unofficial/parts
+        #  * Unofficial/p/48 or Unofficial/p/8 (optional)
+        #  * Unofficial/p
+        #  * Parts folder
+        #  * p/48 or p/8 folder (optional)
+        #  * p folder
+        paths = [
+            os.path.join(os.path.dirname(os.path.abspath(self.modelFile))),
+            os.path.join(self.libraryLocation, "models"),
+            os.path.join(self.libraryLocation, "Unofficial", "parts"),
+            os.path.join(self.libraryLocation, "Unofficial", "p"),
+            os.path.join(self.libraryLocation, "parts"),
+            os.path.join(self.libraryLocation, "p")
+        ]
+
+        return paths
 
     def log(self, string, level=0):
         """Log debug messages to the console.
@@ -268,28 +294,15 @@ class LDRParser:
         """
         locatedFile = None
 
-        # In the order we search:
-        #  * Files relative to the main file
-        #  * Models folder
-        #  * Unofficial parts (parts and p subfolders)
-        #  * Parts folder
-        #  * p folder
-        paths = [
-            os.path.join(os.path.dirname(os.path.abspath(self.modelFile)),
-                         partPath),
-            os.path.join(self.libraryLocation, "models", partPath),
-            os.path.join(self.libraryLocation, "Unofficial", "parts",
-                         partPath),
-            os.path.join(self.libraryLocation, "Unofficial", "p", partPath),
-            os.path.join(self.libraryLocation, "parts", partPath),
-            os.path.join(self.libraryLocation, "p", partPath)
-        ]
-
         # Try the current directory.
         if os.path.isfile(partPath):
             locatedFile = partPath
 
-        # Now lets check the list of paths we built earlier.
+        # Revise the search path just a little bit
+        # to append current the part name
+        paths = [os.path.join(path, partPath) for path in self.__searchPath]
+
+        # Now check the search path for the file.
         if not locatedFile:
             for path in paths:
                 if os.path.isfile(path):

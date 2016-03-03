@@ -238,7 +238,7 @@ class LDRParser:
         # Strip the prefix
         comment = comment.strip().lstrip("0 ")
 
-        # Filter out archaic META commands, blank lines, and comments
+        # Filter out META commands, blank lines, and comments
         # See http://www.ldraw.org/article/218/#meta
         lineFilter = ("", "STEP", "WRITE", "PRINT", "CLEAR", "PAUSE", "SAVE")
         if comment in lineFilter or comment.startswith("//"):
@@ -299,7 +299,7 @@ class LDRParser:
             locatedFile = partPath
 
         # Revise the search path just a little bit
-        # to append current the part name
+        # to append the current part name.
         paths = [os.path.join(path, partPath) for path in self.__searchPath]
 
         # Now check the search path for the file.

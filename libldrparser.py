@@ -44,7 +44,7 @@ class LDRParser:
         self.libraryLocation = libraryLocation
         self.modelFile = None
         self.__parts = {}
-        self.__searchPath = self.__getSearchPath()
+        self.__searchPaths = None
 
     @staticmethod
     def __locate(pattern, root=os.curdir):
@@ -68,7 +68,7 @@ class LDRParser:
                     pass
         return vals
 
-    def __getSearchPath(self):
+    def __getSearchPaths(self):
         """Generate the search path for traversing the LDraw library.
 
         @return {List} A spec-compliant search path.
@@ -108,6 +108,10 @@ class LDRParser:
     def parse(self, modelFile):
         # Set the model to be read
         self.modelFile = modelFile
+
+        # Set the search paths if they have not already been set.
+        if self.__searchPaths is None:
+            self.__searchPaths = self.__getSearchPaths()
 
         # Display the line types we are going to skip parsing.
         if len(self.options["skip"]) > 0:
@@ -300,7 +304,7 @@ class LDRParser:
 
         # Revise the search path just a little bit
         # to append the current part name.
-        paths = [os.path.join(path, partPath) for path in self.__searchPath]
+        paths = [os.path.join(path, partPath) for path in self.__searchPaths]
 
         # Now check the search path for the file.
         if not locatedFile:

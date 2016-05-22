@@ -1,7 +1,8 @@
 #############
-## Windows
+## Platforms
 #############
 
+# Windows
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
@@ -15,6 +16,10 @@ $RECYCLE.BIN/
 # Mac
 .DS_Store
 
+# Linux
+.*
+*~
+.directory
 
 #############
 ## Python
@@ -41,8 +46,15 @@ pip-log.txt
 .coverage
 .tox
 
-#Translations
+# Translations
 *.mo
 
-#Mr Developer
+# Mr Developer
 .mr.developer.cfg
+
+#############
+## Other
+#############
+*.ldr
+*.mpd
+*.json

@@ -25,6 +25,7 @@ SOFTWARE.
 from __future__ import print_function
 
 import os
+import re
 import fnmatch
 
 __all__ = ("LDRParser")
@@ -57,7 +58,7 @@ class LDRParser:
         for i in range(0, len(vals)):
             line = vals[i]
             # Floats
-            if "." in line and "dat" not in line.lower():
+            if bool(re.search('\d\.\d+', line)):
                 vals[i] = float(line)
             else:
                 try:
@@ -128,13 +129,36 @@ class LDRParser:
                      self.modelFile), 0)
             return None
 
+        # Create root object.
+        root = None
+
         # Begin parsing the model and all the parts.
         self.log("Reading Initial File: {0}".format(filePath), 3)
         with open(filePath, "rt") as f:
-            root = self.buildPartData(f.read())
+            # Split input file by any file comments, to support MPD files.
+            splitFile = f.read().split('0 FILE ')
+            rootFile = None
+            # If there is only one result, use that as the root file. (Non MPD)
+            if len(splitFile) == 1:
+                rootFile = splitFile[0]
+            # If there are multiple results, take the second (First is blank) result as the root file.
+            else:
+                # Add file comment back in.
+                rootFile = "0 FILE " + splitFile[1]
+                # Populate the additional models as subparts.
+                for subFile in splitFile[2:]:
+                    fileName = subFile.splitlines()[0].lower().strip()
+                    # Add file comment back in.
+                    fileBody = "0 FILE " + subFile
+                    self.__parts[fileName] = self.buildPartData(fileBody)
+
+            # Build root model.
+            root = self.buildPartData(rootFile)
+
         root["parts"] = self.__parts
 
         self.log("Completed Parsing File: {0}".format(filePath), 3)
+
         return root
 
     def buildPartData(self, ldrString):
@@ -154,8 +178,9 @@ class LDRParser:
 
             # Always parse comments so we can get the part type
             comment = self.parseComment(line)
-            if comment is not None and comment.startswith("!LDRAW_ORG"):
-                definition["partType"] = self.getPartType(comment)
+            if comment is not None:
+                if comment.startswith("!LDRAW_ORG"):
+                    definition["partType"] = self.getPartType(comment)
 
             # We are not skipping this line type.
             if code not in self.options["skip"]:
@@ -215,7 +240,7 @@ class LDRParser:
             splitLine[11], splitLine[12], splitLine[13], splitLine[4],
             0,             0,             0,             1,
         )
-        myDef["partId"] = self.formatPartName(" ".join(splitLine[14:]))
+        myDef["partId"] = self.formatPartName(" ".join([str(i) for i in splitLine[14:]]))
 
         # The part is not in the cache.
         if myDef["partId"] not in self.__parts:

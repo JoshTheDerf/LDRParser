@@ -3,7 +3,7 @@
 A simple python (2.7+ and 3*) module for isolating and converting LDraw models into an
 easily-convertable JSON or Python Dictionary-based format.
 
-Currently does *not* support MPD files, but that may change in the future.
+Currently has experimental support for MPD files.
 
 ##Usage (Command Line)
 Download `LDRParser.py` and `libldrparser.py` and place them in the same directory.
@@ -200,7 +200,7 @@ A basic file looks like this:
 ```
 
 ##TODO:
- * Support for mpd files.
+ * Support for Back-face culling instructions.
  * Support for part metas and comment processing.
  * Document the code
  * Conversion back to LDR files.

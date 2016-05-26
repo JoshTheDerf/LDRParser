@@ -1,11 +1,13 @@
-#LDRParser
+# LDRParser
 
 A simple python (2.7+ and 3*) module for isolating and converting LDraw models into an
-easily-convertable JSON or Python Dictionary-based format.
+easily-convertible JSON or Python Dictionary-based format.
 
 Currently has experimental support for MPD files.
 
-##Usage (Command Line)
+**NOTE:** It would be great if someone could provide me some test files for MPD and BFC support, as I have a very limited set. Thanks!
+
+## Usage (Command Line)
 Download `LDRParser.py` and `libldrparser.py` and place them in the same directory.
 
 Run `python LDRParser.py` from the command line with the path to your ldraw library, the path to your .ldr file,
@@ -42,18 +44,47 @@ parser = LDRParser("PATH/TO/LDRAW/LIBRARY", {
 output = parser.parse("PATH/TO/TARGET/MODEL")
 ```
 
-##Format:
+## Format:
 The examples below will be expressed as JSON for simplicity and readability.
 
-The output contains all parts, sub-parts, and information necessarry for them to be fully rendered and parented. sub-parts are loaded only once, and then referenced by their parents as many times as needed, greatly reducing file size, though it can still be massive.
+The output contains all parts, sub-parts, and information necessary for them to be fully rendered and parented. sub-parts are loaded only once, and then referenced by their parents as many times as needed, greatly reducing file size, though it can still be massive.
 
 A basic file looks like this:
 ```javascript
 { // The root object is simply a part with no name and an object of all used subparts inside it as "parts".
   "parts": { // An object containing the definitions for all parts used anywhere in this file, indexed by file name.
     "stud3.dat": {
+      // Any comments found in the file not deemed irrelevant.
+      "comments": {
+        "Stud Tube Solid",
+        "Name: stud3.dat",
+        "Author: James Jessiman",
+        "!LDRAW_ORG Primitive UPDATE 2012-01",
+        "!LICENSE Redistributable under CCAL version 2.0 : see CAreadme.txt",
+        "BFC CERTIFY CCW",
+        "!HISTORY 2002-04-04 [sbliss] Modified for BFC compliance",
+        "!HISTORY 2002-04-25 [PTadmin] Official Update 2002-02",
+        "!HISTORY 2007-06-24 [PTadmin] Header formatted for Contributor Agreement",
+        "!HISTORY 2008-07-01 [PTadmin] Official Update 2008-01",
+        "!HISTORY 2012-02-16 [Philo] Changed to CCW",
+        "!HISTORY 2012-03-30 [PTadmin] Official Update 2012-01"
+      },
+      // The base winding information for this file. 0 = CCW, 1 = CW. Not present if there is no specified winding info, in which case CCW should be assumed.
+      "bfc": 0,
+      // The type of this part. (Primitive, Subpart, or Part)
+      "partType": "Part",
       "subparts": [
         {
+          // Bitmask (as Integer) representing the BFC values.
+          // bit 0 = Winding. 0 if CCW, 1 if CW
+          // bit 1 = Clip. 0 if clip is not specified or disabled, 1 if it is enabled.
+          // bit 2 = Invertnext. 0 if invertnext is not specified, 1 if it is enabled.
+          // All Together:
+          // - 4 = 100 = Winding: CCW, Clip: disabled, Invertnext enabled.
+          // - 3 = 011 = Winding: CW, Clip: enabled, Invertnext disabled.
+          // - 1 = 001 = Winding: CW, Clip: disabled, Invertnext disabled.
+          // - .. and so on. Most common values are 0, 4, and 1.
+          "bfc": 0
           // The id of the part in the parts object.
           "partId": "4-4edge.dat"
           "color": "16", // Raw color from the LDR file.
@@ -81,6 +112,16 @@ A basic file looks like this:
       // Defines a line from pos1 to pos2.
       "lines": [
         {
+          // Bitmask (as Integer) representing the BFC values.
+          // bit 0 = Winding. 0 if CCW, 1 if CW
+          // bit 1 = Clip. 0 if clip is not specified or disabled, 1 if it is enabled.
+          // bit 2 = Invertnext. 0 if invertnext is not specified, 1 if it is enabled.
+          // All Together:
+          // - 4 = 100 = Winding: CCW, Clip: disabled, Invertnext enabled.
+          // - 3 = 011 = Winding: CW, Clip: enabled, Invertnext disabled.
+          // - 1 = 001 = Winding: CW, Clip: disabled, Invertnext disabled.
+          // - .. and so on. Most common values are 0, 4, and 1.
+          "bfc": 0
           "color": "16",
           "pos1": [
             "-1",
@@ -97,6 +138,16 @@ A basic file looks like this:
       // Defines a triangle. Vertices are pos1, pos2, and pos3.
       "tris": [
         {
+          // Bitmask (as Integer) representing the BFC values.
+          // bit 0 = Winding. 0 if CCW, 1 if CW
+          // bit 1 = Clip. 0 if clip is not specified or disabled, 1 if it is enabled.
+          // bit 2 = Invertnext. 0 if invertnext is not specified, 1 if it is enabled.
+          // All Together:
+          // - 4 = 100 = Winding: CCW, Clip: disabled, Invertnext enabled.
+          // - 3 = 011 = Winding: CW, Clip: enabled, Invertnext disabled.
+          // - 1 = 001 = Winding: CW, Clip: disabled, Invertnext disabled.
+          // - .. and so on. Most common values are 0, 4, and 1.
+          "bfc": 0
           "color": "16",
           "pos1": [
             "-1",
@@ -118,6 +169,16 @@ A basic file looks like this:
       // Defines a quad. Vertices are pos1, pos2, pos3, and pos4.
       "quads": [
         {
+          // Bitmask (as Integer) representing the BFC values.
+          // bit 0 = Winding. 0 if CCW, 1 if CW
+          // bit 1 = Clip. 0 if clip is not specified or disabled, 1 if it is enabled.
+          // bit 2 = Invertnext. 0 if invertnext is not specified, 1 if it is enabled.
+          // All Together:
+          // - 4 = 100 = Winding: CCW, Clip: disabled, Invertnext enabled.
+          // - 3 = 011 = Winding: CW, Clip: enabled, Invertnext disabled.
+          // - 1 = 001 = Winding: CW, Clip: disabled, Invertnext disabled.
+          // - .. and so on. Most common values are 0, 4, and 1.
+          "bfc": 0
           "color": "16",
           "pos1": [
             "-1",
@@ -146,6 +207,16 @@ A basic file looks like this:
       // line type 5. pos1 and 2 define the line vertices, ctl1 and 2 are the control points.
       "optlines": [
         {
+          // Bitmask (as Integer) representing the BFC values.
+          // bit 0 = Winding. 0 if CCW, 1 if CW
+          // bit 1 = Clip. 0 if clip is not specified or disabled, 1 if it is enabled.
+          // bit 2 = Invertnext. 0 if invertnext is not specified, 1 if it is enabled.
+          // All Together:
+          // - 4 = 100 = Winding: CCW, Clip: disabled, Invertnext enabled.
+          // - 3 = 011 = Winding: CW, Clip: enabled, Invertnext disabled.
+          // - 1 = 001 = Winding: CW, Clip: disabled, Invertnext disabled.
+          // - .. and so on. Most common values are 0, 4, and 1.
+          "bfc": 0
           "color": "16",
           "pos1": [
             "-1",
@@ -174,6 +245,16 @@ A basic file looks like this:
   },
   "subparts": [
     {
+      // Bitmask (as Integer) representing the BFC values.
+      // bit 0 = Winding. 0 if CCW, 1 if CW
+      // bit 1 = Clip. 0 if clip is not specified or disabled, 1 if it is enabled.
+      // bit 2 = Invertnext. 0 if invertnext is not specified, 1 if it is enabled.
+      // All Together:
+      // - 4 = 100 = Winding: CCW, Clip: disabled, Invertnext enabled.
+      // - 3 = 011 = Winding: CW, Clip: enabled, Invertnext disabled.
+      // - 1 = 001 = Winding: CW, Clip: disabled, Invertnext disabled.
+      // - .. and so on. Most common values are 0, 4, and 1.
+      "bfc": 0
       "color": "3",
       "partId": "stud3.dat",
       "matrix": [
@@ -199,14 +280,13 @@ A basic file looks like this:
 }
 ```
 
-##TODO:
- * Support for Back-face culling instructions.
+## TODO:
  * Support for part metas and comment processing.
  * Document the code
  * Conversion back to LDR files.
  * Flattening of format, so that the only things stored are those necessary for drawing. (Vertices, Indices, and Colors, really.) Requires decent knowledge of Linear Algebra and 4x4 Matrices.
 
-##License:
+## License:
 ```
 The MIT License (MIT)
 

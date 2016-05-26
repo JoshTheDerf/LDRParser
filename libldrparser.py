@@ -58,7 +58,7 @@ class LDRParser:
         for i in range(0, len(vals)):
             line = vals[i]
             # Floats
-            if bool(re.search('\d\.\d+', line)):
+            if bool(re.search("\d\.\d+", line)):
                 vals[i] = float(line)
             else:
                 try:
@@ -136,12 +136,13 @@ class LDRParser:
         self.log("Reading Initial File: {0}".format(filePath), 3)
         with open(filePath, "rt") as f:
             # Split input file by any file comments, to support MPD files.
-            splitFile = f.read().split('0 FILE ')
+            splitFile = f.read().split("0 FILE ")
             rootFile = None
             # If there is only one result, use that as the root file. (Non MPD)
             if len(splitFile) == 1:
                 rootFile = splitFile[0]
-            # If there are multiple results, take the second (First is blank) result as the root file.
+            # If there are multiple results, take the second (First is blank)
+            # result as the root file.
             else:
                 # Add file comment back in.
                 rootFile = "0 FILE " + splitFile[1]
@@ -163,6 +164,11 @@ class LDRParser:
 
     def buildPartData(self, ldrString):
         definition = {}
+
+        isBFCEnabled = False
+        baseBFCDir = None
+        curBFCMask = None
+
         lines = ldrString.splitlines()
 
         for line in lines:
@@ -181,6 +187,25 @@ class LDRParser:
             if comment is not None:
                 if comment.startswith("!LDRAW_ORG"):
                     definition["partType"] = self.getPartType(comment)
+                # Potentially dangerous if a malformed file has
+                # BFC declarations after the first command.
+                elif comment.startswith("BFC") and not isBFCEnabled:
+                    isBFCEnabled = True
+                    if comment.find("CCW") > -1 or comment.find("CW") == -1:
+                        baseBFCDir = 0
+                    else:
+                        baseBFCDir = 1
+
+                    # Set base BFC
+                    definition['bfc'] = baseBFCDir
+
+                    # Set initial BFC number
+                    curBFCMask = self.getBFCBitmask(comment, curBFCMask)
+
+                # Parse all BFC instructions into bitmask.
+                elif comment.startswith("BFC") and isBFCEnabled:
+                    # Set the current BFC mask, updating the old one.
+                    curBFCMask = self.getBFCBitmask(comment, curBFCMask)
 
             # We are not skipping this line type.
             if code not in self.options["skip"]:
@@ -199,32 +224,81 @@ class LDRParser:
                     if "subparts" not in definition:
                         definition["subparts"] = []
                     definition["subparts"].append(self.parsePart(line))
+                    # Add BFC Info
+                    if isBFCEnabled:
+                        definition["subparts"][-1]["bfc"] = curBFCMask
+                        # Reset invertnext to 0, as it only applies for a single subpart line.
+                        curBFCMask = self.toggleBit(curBFCMask, 0, 2)
 
                 # Parse the straight lines.
                 elif code == "LINE":
                     if "lines" not in definition:
                         definition["lines"] = []
                     definition["lines"].append(self.parseLine(line))
+                    # Add BFC Info
+                    if isBFCEnabled:
+                        definition["lines"][-1]["bfc"] = curBFCMask
 
                 # Parse the triangles.
                 elif code == "TRI":
                     if "tris" not in definition:
                         definition["tris"] = []
                     definition["tris"].append(self.parseTri(line))
+                    # Add BFC Info
+                    if isBFCEnabled:
+                        definition["tris"][-1]["bfc"] = curBFCMask
 
                 # Parse the quadrilaterals.
                 elif code == "QUAD":
                     if "quads" not in definition:
                         definition["quads"] = []
                     definition["quads"].append(self.parseQuad(line))
+                    # Add BFC Info
+                    if isBFCEnabled:
+                        definition["quads"][-1]["bfc"] = curBFCMask
 
                 # Parse the optional lines.
                 elif code == "OPTLINE":
                     if "optlines" not in definition:
                         definition["optlines"] = []
                     definition["optlines"].append(self.parseOptLine(line))
+                    # Add BFC Info
+                    if isBFCEnabled:
+                        definition["optlines"][-1]["bfc"] = curBFCMask
 
         return definition
+
+    def toggleBit(self, val, state, bitIndex):
+        if state == 1:
+            return val | (1 << bitIndex)
+        elif state == 0:
+            return val & ~(1 << bitIndex)
+        else:
+            return val
+
+    def getBFCBitmask(self, bfcComment, bfcNum):
+        if bfcNum is None:
+            bfcNum = 0
+
+        if bfcComment.find('INVERTNEXT') > -1:
+            # Add invert flag.
+            bfcNum = self.toggleBit(bfcNum, 1, 2)
+            # Invertnext cannot have any other flags, so return here.
+            return bfcNum
+
+        if bfcComment.find('NOCLIP') > -1:
+            # Remove CLIP flag.
+            bfcNum = self.toggleBit(bfcNum, 0, 1)
+        elif bfcComment.find('CLIP') > -1:
+            # Set CLIP flag.
+            bfcNum = self.toggleBit(bfcNum, 1, 1)
+
+        if bfcComment.find('CCW') > -1:
+            bfcNum = self.toggleBit(bfcNum, 0, 0)
+        elif bfcComment.find('CW') > -1:
+            bfcNum = self.toggleBit(bfcNum, 1, 0)
+
+        return bfcNum
 
     def getPartType(self, line):
         return line.split()[1]
@@ -240,7 +314,9 @@ class LDRParser:
             splitLine[11], splitLine[12], splitLine[13], splitLine[4],
             0,             0,             0,             1,
         )
-        myDef["partId"] = self.formatPartName(" ".join([str(i) for i in splitLine[14:]]))
+        myDef["partId"] = self.formatPartName(" ".join(
+            [str(i) for i in splitLine[14:]]
+        ))
 
         # The part is not in the cache.
         if myDef["partId"] not in self.__parts:
